@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>24-Hour Day Controller</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Dashboard Metrics */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Visual 24h Bar */
+    .bar-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      color: var(--muted);
+    }
+
+    .progress-track {
+      height: 24px;
+      width: 100%;
+      background: #0f172a;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--border);
+    }
+
+    .progress-segment {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text);
+      background: #0f172a;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Activity List */
+    .activity-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .activity-row {
+      display: grid;
+      grid-template-columns: 32px 1.8fr 1.2fr 90px 90px 80px 36px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-row:last-child {
+      border-bottom: none;
+    }
+
+    .activity-row.completed .act-name {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .row-header {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    input[type="number"] {
+      text-align: center;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .checkbox-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--success);
+      cursor: pointer;
+    }
+
+    .pct-badge {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .del-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 1.1rem;
+      padding: 4px;
+    }
+
+    .del-btn:hover {
+      color: var(--danger);
+    }
+
+    .alert-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: #fca5a5;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 700px) {
+      .row-header {
+        display: none;
+      }
+      .activity-row {
+        grid-template-columns: 28px 1fr 1fr;
+        gap: 8px;
+        padding: 14px 0;
+      }
+      .act-name {
+        grid-column: 2 / 4;
+      }
+      .act-cat {
+        grid-column: 1 / 4;
+      }
+      .act-hrs, .act-mins {
+        grid-column: span 1;
+      }
+      .pct-badge {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>24-Hour Day Controller</h1>
+    <div class="btn-group">
+      <button class="btn-primary" onclick="addActivity()">+ Add Block</button>
+      <button onclick="uncheckAll()">New Day (Uncheck)</button>
+      <button class="btn-danger" onclick="resetDefaults()">Reset Default</button>
+    </div>
+  </header>
+
+  <div id="overbudgetAlert" class="alert-banner"></div>
+
+  <!-- Top Metrics -->
+  <div class="dashboard">
+    <div class="metric-card">
+      <div class="metric-label">Total Planned</div>
+      <div class="metric-value" id="totalAllocated">0h 0m</div>
+      <div class="metric-sub" id="allocatedPct">0% of 24 hours</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Unplanned Time Left</div>
+      <div class="metric-value" id="remainingTime">24h 0m</div>
+      <div class="metric-sub" id="remainingMins">1440 mins left</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Completed Today</div>
+      <div class="metric-value" id="completedTime">0h 0m</div>
+      <div class="metric-sub" id="completedPct">0% of planned done</div>
+    </div>
+  </div>
+
+  <!-- Visual Breakdown -->
+  <div class="bar-container">
+    <div class="bar-header">
+      <span>24-Hour Visual Breakdown</span>
+      <span id="barRatioText">0 / 1440 mins</span>
+    </div>
+    <div class="progress-track" id="progressTrack"></div>
+    <div class="legend" id="categoryLegend"></div>
+  </div>
+
+  <!-- Interactive Rows -->
+  <div class="activity-card">
+    <div class="activity-row row-header">
+      <div>Done</div>
+      <div>Activity / Time Block</div>
+      <div>Category</div>
+      <div style="text-align:center;">Hours</div>
+      <div style="text-align:center;">Minutes</div>
+      <div style="text-align:right;">% of Day</div>
+      <div></div>
+    </div>
+    <div id="activityList"></div>
+  </div>
+</div>
+
+<script>
+  const CATEGORIES = {
+    "Sleep & Rest": "#818cf8",
+    "Work & Teaching": "#38bdf8",
+    "Study & Planning": "#c084fc",
+    "Workout & Exercise": "#22c55e",
+    "Food & Cooking": "#f59e0b",
+    "Daily Tasks & Travel": "#fb7185",
+    "Free & Extra Time": "#94a3b8"
+  };
+
+  const DEFAULT_DATA = [
+    { id: 1, name: "Night Sleep", category: "Sleep & Rest", hours: 7, minutes: 30, completed: false },
+    { id: 2, name: "Workout & Exercise", category: "Workout & Exercise", hours: 1, minutes: 30, completed: false },
+    { id: 3, name: "Main Work / Teaching", category: "Work & Teaching", hours: 6, minutes: 0, completed: false },
+    { id: 4, name: "Self-Study & Lesson Planning", category: "Study & Planning", hours: 3, minutes: 0, completed: false },
+    { id: 5, name: "Cooking & Eating Meals", category: "Food & Cooking", hours: 2, minutes: 0, completed: false },
+    { id: 6, name: "Home Tasks & Travel", category: "Daily Tasks & Travel", hours: 2, minutes: 0, completed: false },
+    { id: 7, name: "Relax & Extra Time", category: "Free & Extra Time", hours: 2, minutes: 0, completed: false }
+  ];
+
+  const STORAGE_KEY = "dayControllerSimpleData_v2";
+  let activities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_DATA;
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
+  }
+
+  function formatMins(totalMins) {
+    const sign = totalMins < 0 ? "-" : "";
+    const abs = Math.abs(totalMins);
+    const h = Math.floor(abs / 60);
+    const m = abs % 60;
+    return `${sign}${h}h ${m}m`;
+  }
+
+  function render() {
+    const list = document.getElementById("activityList");
+    list.innerHTML = "";
+
+    let totalMins = 0;
+    let completedMins = 0;
+    const catTotals = {};
+
+    Object.keys(CATEGORIES).forEach(c => catTotals[c] = 0);
+
+    activities.forEach((act) => {
+      const h = parseInt(act.hours) || 0;
+      const m = parseInt(act.minutes) || 0;
+      const rowMins = (h * 60) + m;
+      totalMins += rowMins;
+      if (act.completed) completedMins += rowMins;
+
+      if (catTotals[act.category] !== undefined) {
+        catTotals[act.category] += rowMins;
+      } else {
+        catTotals["Free & Extra Time"] += rowMins;
+      }
+
+      const pct = ((rowMins / 1440) * 100).toFixed(1);
+
+      const row = document.createElement("div");
+      row.className = `activity-row ${act.completed ? "completed" : ""}`;
+
+      const catOptions = Object.keys(CATEGORIES).map(cat =>
+        `<option value="${cat}" ${act.category === cat ? "selected" : ""}>${cat}</option>`
+      ).join("");
+
+      row.innerHTML = `
+        <div class="checkbox-wrap">
+          <input type="checkbox" ${act.completed ? "checked" : ""} onchange="toggleComplete(${act.id})">
+        </div>
+        <div class="act-name">
+          <input type="text" value="${act.name}" oninput="updateField(${act.id}, 'name', this.value)" placeholder="Activity name...">
+        </div>
+        <div class="act-cat">
+          <select onchange="updateField(${act.id}, 'category', this.value)">${catOptions}</select>
+        </div>
+        <div class="act-hrs">
+          <input type="number" min="0" max="24" value="${h}" oninput="updateField(${act.id}, 'hours', this.value)" title="Hours">
+        </div>
+        <div class="act-mins">
+          <input type="number" min="0" max="59" step="5" value="${m}" oninput="updateField(${act.id}, 'minutes', this.value)" title="Minutes">
+        </div>
+        <div class="pct-badge">${pct}%</div>
+        <div>
+          <button class="del-btn" onclick="deleteActivity(${act.id})" title="Delete">&times;</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+
+    updateDashboard(totalMins, completedMins, catTotals);
+  }
+
+  function updateDashboard(totalMins, completedMins, catTotals) {
+    const remainingMins = 1440 - totalMins;
+    const allocPct = ((totalMins / 1440) * 100).toFixed(1);
+    const compPct = totalMins > 0 ? ((completedMins / totalMins) * 100).toFixed(0) : 0;
+
+    document.getElementById("totalAllocated").textContent = formatMins(totalMins);
+    document.getElementById("allocatedPct").textContent = `${allocPct}% of 24 hours`;
+
+    const remEl = document.getElementById("remainingTime");
+    const remSub = document.getElementById("remainingMins");
+    const alertBanner = document.getElementById("overbudgetAlert");
+
+    remEl.textContent = formatMins(remainingMins);
+
+    if (remainingMins < 0) {
+      remEl.style.color = "var(--danger)";
+      remSub.textContent = `${Math.abs(remainingMins)} mins over 24 hours!`;
+      alertBanner.style.display = "block";
+      alertBanner.textContent = `⚠️ You have added ${formatMins(Math.abs(remainingMins))} too much. Reduce some blocks so your day equals 24 hours.`;
+    } else if (remainingMins === 0) {
+      remEl.style.color = "var(--success)";
+      remSub.textContent = "Full 24 hours planned!";
+      alertBanner.style.display = "none";
+    } else {
+      remEl.style.color = "var(--accent)";
+      remSub.textContent = `${remainingMins} mins left to plan`;
+      alertBanner.style.display = "none";
+    }
+
+    document.getElementById("completedTime").textContent = formatMins(completedMins);
+    document.getElementById("completedPct").textContent = `${compPct}% of planned done`;
+    document.getElementById("barRatioText").textContent = `${totalMins} / 1440 mins`;
+
+    // Render Progress Bar & Category Legend
+    const track = document.getElementById("progressTrack");
+    const legend = document.getElementById("categoryLegend");
+    track.innerHTML = "";
+    legend.innerHTML = "";
+
+    Object.entries(catTotals).forEach(([cat, mins]) => {
+      if (mins > 0) {
+        const widthPct = Math.min((mins / Math.max(1440, totalMins)) * 100, 100);
+        const seg = document.createElement("div");
+        seg.className = "progress-segment";
+        seg.style.width = `${widthPct}%`;
+        seg.style.backgroundColor = CATEGORIES[cat];
+        seg.title = `${cat}: ${formatMins(mins)}`;
+        track.appendChild(seg);
+
+        const leg = document.createElement("div");
+        leg.className = "legend-item";
+        leg.innerHTML = `
+          <span class="color-dot" style="background:${CATEGORIES[cat]}"></span>
+          <span>${cat}: <strong>${formatMins(mins)}</strong></span>
+        `;
+        legend.appendChild(leg);
+      }
+    });
+
+    if (remainingMins > 0) {
+      const leg = document.createElement("div");
+      leg.className = "legend-item";
+      leg.innerHTML = `
+        <span class="color-dot" style="background:#334155"></span>
+        <span>Unplanned: <strong>${formatMins(remainingMins)}</strong></span>
+      `;
+      legend.appendChild(leg);
+    }
+  }
+
+  function updateField(id, field, value) {
+    const item = activities.find(a => a.id === id);
+    if (!item) return;
+    if (field === "hours" || field === "minutes") {
+      item[field] = Math.max(0, parseInt(value) || 0);
+    } else {
+      item[field] = value;
+    }
+    save();
+    render();
+  }
+
+  function toggleComplete(id) {
+    const item = activities.find(a => a.id === id);
+    if (item) {
+      item.completed = !item.completed;
+      save();
+      render();
+    }
+  }
+
+  function addActivity() {
+    const newId = activities.length ? Math.max(...activities.map(a => a.id)) + 1 : 1;
+    activities.push({
+      id: newId,
+      name: "New Activity",
+      category: "Free & Extra Time",
+      hours: 1,
+      minutes: 0,
+      completed: false
+    });
+    save();
+    render();
+  }
+
+  function deleteActivity(id) {
+    activities = activities.filter(a => a.id !== id);
+    save();
+    render();
+  }
+
+  function uncheckAll() {
+    activities.forEach(a => a.completed = false);
+    save();
+    render();
+  }
+
+  function resetDefaults() {
+    if (confirm("Reset your schedule back to the default 24-hour template?")) {
+      activities = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      save();
+      render();
+    }
+  }
+
+  render();
+</script>
+
+</body>
+</html>
