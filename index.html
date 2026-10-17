@@ -22,13 +22,15 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow-anchor: none;
     }
 
-    body {
+    html, body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 20px;
+      padding: 16px;
       line-height: 1.5;
+      overflow-anchor: none;
     }
 
     .container {
@@ -46,7 +48,7 @@
     }
 
     h1 {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--text);
     }
@@ -54,6 +56,7 @@
     .btn-group {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -65,7 +68,7 @@
       cursor: pointer;
       font-size: 0.85rem;
       font-weight: 600;
-      transition: 0.2s;
+      transition: border-color 0.2s;
     }
 
     button:hover {
@@ -78,10 +81,6 @@
       border-color: var(--accent);
     }
 
-    .btn-primary:hover {
-      opacity: 0.9;
-    }
-
     .btn-danger:hover {
       border-color: var(--danger);
       color: var(--danger);
@@ -91,26 +90,26 @@
     .dashboard {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      gap: 12px;
+      margin-bottom: 18px;
     }
 
     .metric-card {
       background: var(--card);
       border: 1px solid var(--border);
-      padding: 16px;
+      padding: 14px 16px;
       border-radius: 12px;
     }
 
     .metric-label {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .metric-value {
-      font-size: 1.6rem;
+      font-size: 1.55rem;
       font-weight: 700;
       margin-top: 4px;
     }
@@ -127,7 +126,7 @@
       border: 1px solid var(--border);
       padding: 16px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .bar-header {
@@ -139,7 +138,7 @@
     }
 
     .progress-track {
-      height: 24px;
+      height: 22px;
       width: 100%;
       background: #0f172a;
       border-radius: 8px;
@@ -150,13 +149,14 @@
 
     .progress-segment {
       height: 100%;
-      transition: width 0.3s ease;
+      width: 0%;
+      transition: width 0.2s ease;
     }
 
     .legend {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 8px;
       margin-top: 12px;
     }
 
@@ -164,7 +164,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text);
       background: #0f172a;
       padding: 4px 10px;
@@ -176,6 +176,7 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
+      flex-shrink: 0;
     }
 
     /* Activity List */
@@ -183,16 +184,16 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
+      padding: 14px;
+      margin-bottom: 24px;
     }
 
     .activity-row {
       display: grid;
-      grid-template-columns: 32px 1.8fr 1.2fr 90px 90px 80px 36px;
+      grid-template-columns: 32px 1.8fr 1.3fr 110px 110px 70px 34px;
       gap: 10px;
       align-items: center;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border);
     }
 
@@ -200,7 +201,7 @@
       border-bottom: none;
     }
 
-    .activity-row.completed .act-name {
+    .activity-row.completed .act-name input {
       text-decoration: line-through;
       color: var(--muted);
     }
@@ -221,13 +222,29 @@
       background: #0f172a;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.9rem;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 0.95rem;
     }
 
-    input[type="number"] {
+    .time-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .time-input-wrap input {
+      padding-right: 36px;
       text-align: center;
+      font-weight: 600;
+    }
+
+    .unit-label {
+      position: absolute;
+      right: 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      pointer-events: none;
     }
 
     input:focus, select:focus {
@@ -238,11 +255,12 @@
     .checkbox-wrap {
       display: flex;
       justify-content: center;
+      align-items: center;
     }
 
     input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       accent-color: var(--success);
       cursor: pointer;
     }
@@ -252,14 +270,21 @@
       color: var(--muted);
       text-align: right;
       font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .del-wrap {
+      display: flex;
+      justify-content: flex-end;
     }
 
     .del-btn {
       background: transparent;
       border: none;
       color: var(--muted);
-      font-size: 1.1rem;
-      padding: 4px;
+      font-size: 1.25rem;
+      padding: 4px 8px;
+      line-height: 1;
     }
 
     .del-btn:hover {
@@ -273,7 +298,7 @@
       color: #fca5a5;
       padding: 12px 16px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-size: 0.9rem;
       font-weight: 600;
     }
@@ -283,21 +308,38 @@
         display: none;
       }
       .activity-row {
-        grid-template-columns: 28px 1fr 1fr;
-        gap: 8px;
-        padding: 14px 0;
+        grid-template-columns: 32px 1fr 1fr 62px;
+        gap: 10px;
+        padding: 16px 0;
+      }
+      .checkbox-wrap {
+        grid-column: 1 / 2;
+        grid-row: 1;
       }
       .act-name {
         grid-column: 2 / 4;
+        grid-row: 1;
+      }
+      .del-wrap {
+        grid-column: 4 / 5;
+        grid-row: 1;
       }
       .act-cat {
-        grid-column: 1 / 4;
+        grid-column: 1 / 5;
+        grid-row: 2;
       }
-      .act-hrs, .act-mins {
-        grid-column: span 1;
+      .act-hrs {
+        grid-column: 1 / 3;
+        grid-row: 3;
+      }
+      .act-mins {
+        grid-column: 3 / 4;
+        grid-row: 3;
       }
       .pct-badge {
-        text-align: left;
+        grid-column: 4 / 5;
+        grid-row: 3;
+        text-align: right;
       }
     }
   </style>
@@ -396,10 +438,94 @@
     return `${sign}${h}h ${m}m`;
   }
 
-  function render() {
+  function initVisualBar() {
+    const track = document.getElementById("progressTrack");
+    const legend = document.getElementById("categoryLegend");
+    track.innerHTML = "";
+    legend.innerHTML = "";
+
+    Object.entries(CATEGORIES).forEach(([cat, color], idx) => {
+      const seg = document.createElement("div");
+      seg.className = "progress-segment";
+      seg.id = `seg-${idx}`;
+      seg.style.backgroundColor = color;
+      track.appendChild(seg);
+
+      const leg = document.createElement("div");
+      leg.className = "legend-item";
+      leg.id = `leg-${idx}`;
+      leg.innerHTML = `
+        <span class="color-dot" style="background:${color}"></span>
+        <span>${cat}: <strong id="leg-val-${idx}">0h 0m</strong></span>
+      `;
+      legend.appendChild(leg);
+    });
+
+    const unpLeg = document.createElement("div");
+    unpLeg.className = "legend-item";
+    unpLeg.id = "leg-unplanned";
+    unpLeg.innerHTML = `
+      <span class="color-dot" style="background:#334155"></span>
+      <span>Unplanned: <strong id="leg-val-unplanned">0h 0m</strong></span>
+    `;
+    legend.appendChild(unpLeg);
+  }
+
+  function renderList() {
     const list = document.getElementById("activityList");
     list.innerHTML = "";
 
+    activities.forEach((act) => {
+      const h = parseInt(act.hours) || 0;
+      const m = parseInt(act.minutes) || 0;
+      const rowMins = (h * 60) + m;
+      const pct = ((rowMins / 1440) * 100).toFixed(1);
+
+      const row = document.createElement("div");
+      row.id = `row-${act.id}`;
+      row.className = `activity-row ${act.completed ? "completed" : ""}`;
+
+      const catOptions = Object.keys(CATEGORIES).map(cat =>
+        `<option value="${cat}" ${act.category === cat ? "selected" : ""}>${cat}</option>`
+      ).join("");
+
+      row.innerHTML = `
+        <div class="checkbox-wrap">
+          <input type="checkbox" ${act.completed ? "checked" : ""} onchange="toggleComplete(${act.id})">
+        </div>
+        <div class="act-name">
+          <input type="text" id="name-${act.id}" oninput="updateField(${act.id}, 'name', this.value)" placeholder="Activity name...">
+        </div>
+        <div class="act-cat">
+          <select onchange="updateField(${act.id}, 'category', this.value)">${catOptions}</select>
+        </div>
+        <div class="act-hrs time-input-wrap">
+          <input type="number" inputmode="numeric" min="0" max="24" value="${h}" placeholder="0"
+            onfocus="if(this.value==='0') this.value='';"
+            onblur="if(this.value==='') { this.value='0'; updateField(${act.id}, 'hours', '0'); }"
+            oninput="updateField(${act.id}, 'hours', this.value)" title="Hours">
+          <span class="unit-label">hrs</span>
+        </div>
+        <div class="act-mins time-input-wrap">
+          <input type="number" inputmode="numeric" min="0" max="59" value="${m}" placeholder="0"
+            onfocus="if(this.value==='0') this.value='';"
+            onblur="if(this.value==='') { this.value='0'; updateField(${act.id}, 'minutes', '0'); }"
+            oninput="updateField(${act.id}, 'minutes', this.value)" title="Minutes">
+          <span class="unit-label">min</span>
+        </div>
+        <div class="pct-badge" id="pct-${act.id}">${pct}%</div>
+        <div class="del-wrap">
+          <button class="del-btn" onclick="deleteActivity(${act.id})" title="Delete">&times;</button>
+        </div>
+      `;
+      list.appendChild(row);
+      document.getElementById(`name-${act.id}`).value = act.name;
+    });
+
+    recalculate();
+  }
+
+  function recalculate() {
     let totalMins = 0;
     let completedMins = 0;
     const catTotals = {};
@@ -419,37 +545,10 @@
         catTotals["Free & Extra Time"] += rowMins;
       }
 
-      const pct = ((rowMins / 1440) * 100).toFixed(1);
-
-      const row = document.createElement("div");
-      row.className = `activity-row ${act.completed ? "completed" : ""}`;
-
-      const catOptions = Object.keys(CATEGORIES).map(cat =>
-        `<option value="${cat}" ${act.category === cat ? "selected" : ""}>${cat}</option>`
-      ).join("");
-
-      row.innerHTML = `
-        <div class="checkbox-wrap">
-          <input type="checkbox" ${act.completed ? "checked" : ""} onchange="toggleComplete(${act.id})">
-        </div>
-        <div class="act-name">
-          <input type="text" value="${act.name}" oninput="updateField(${act.id}, 'name', this.value)" placeholder="Activity name...">
-        </div>
-        <div class="act-cat">
-          <select onchange="updateField(${act.id}, 'category', this.value)">${catOptions}</select>
-        </div>
-        <div class="act-hrs">
-          <input type="number" min="0" max="24" value="${h}" oninput="updateField(${act.id}, 'hours', this.value)" title="Hours">
-        </div>
-        <div class="act-mins">
-          <input type="number" min="0" max="59" step="5" value="${m}" oninput="updateField(${act.id}, 'minutes', this.value)" title="Minutes">
-        </div>
-        <div class="pct-badge">${pct}%</div>
-        <div>
-          <button class="del-btn" onclick="deleteActivity(${act.id})" title="Delete">&times;</button>
-        </div>
-      `;
-      list.appendChild(row);
+      const pctEl = document.getElementById(`pct-${act.id}`);
+      if (pctEl) {
+        pctEl.textContent = `${((rowMins / 1440) * 100).toFixed(1)}%`;
+      }
     });
 
     updateDashboard(totalMins, completedMins, catTotals);
@@ -488,40 +587,18 @@
     document.getElementById("completedPct").textContent = `${compPct}% of planned done`;
     document.getElementById("barRatioText").textContent = `${totalMins} / 1440 mins`;
 
-    // Render Progress Bar & Category Legend
-    const track = document.getElementById("progressTrack");
-    const legend = document.getElementById("categoryLegend");
-    track.innerHTML = "";
-    legend.innerHTML = "";
-
-    Object.entries(catTotals).forEach(([cat, mins]) => {
-      if (mins > 0) {
-        const widthPct = Math.min((mins / Math.max(1440, totalMins)) * 100, 100);
-        const seg = document.createElement("div");
-        seg.className = "progress-segment";
-        seg.style.width = `${widthPct}%`;
-        seg.style.backgroundColor = CATEGORIES[cat];
-        seg.title = `${cat}: ${formatMins(mins)}`;
-        track.appendChild(seg);
-
-        const leg = document.createElement("div");
-        leg.className = "legend-item";
-        leg.innerHTML = `
-          <span class="color-dot" style="background:${CATEGORIES[cat]}"></span>
-          <span>${cat}: <strong>${formatMins(mins)}</strong></span>
-        `;
-        legend.appendChild(leg);
-      }
+    Object.keys(CATEGORIES).forEach((cat, idx) => {
+      const mins = catTotals[cat] || 0;
+      const widthPct = mins > 0 ? Math.min((mins / Math.max(1440, totalMins)) * 100, 100) : 0;
+      const seg = document.getElementById(`seg-${idx}`);
+      const legVal = document.getElementById(`leg-val-${idx}`);
+      if (seg) seg.style.width = `${widthPct}%`;
+      if (legVal) legVal.textContent = formatMins(mins);
     });
 
-    if (remainingMins > 0) {
-      const leg = document.createElement("div");
-      leg.className = "legend-item";
-      leg.innerHTML = `
-        <span class="color-dot" style="background:#334155"></span>
-        <span>Unplanned: <strong>${formatMins(remainingMins)}</strong></span>
-      `;
-      legend.appendChild(leg);
+    const unpVal = document.getElementById("leg-val-unplanned");
+    if (unpVal) {
+      unpVal.textContent = formatMins(Math.max(0, remainingMins));
     }
   }
 
@@ -534,15 +611,19 @@
       item[field] = value;
     }
     save();
-    render();
+    recalculate();
   }
 
   function toggleComplete(id) {
     const item = activities.find(a => a.id === id);
     if (item) {
       item.completed = !item.completed;
+      const row = document.getElementById(`row-${id}`);
+      if (row) {
+        row.classList.toggle("completed", item.completed);
+      }
       save();
-      render();
+      recalculate();
     }
   }
 
@@ -557,30 +638,31 @@
       completed: false
     });
     save();
-    render();
+    renderList();
   }
 
   function deleteActivity(id) {
     activities = activities.filter(a => a.id !== id);
     save();
-    render();
+    renderList();
   }
 
   function uncheckAll() {
     activities.forEach(a => a.completed = false);
     save();
-    render();
+    renderList();
   }
 
   function resetDefaults() {
     if (confirm("Reset your schedule back to the default 24-hour template?")) {
       activities = JSON.parse(JSON.stringify(DEFAULT_DATA));
       save();
-      render();
+      renderList();
     }
   }
 
-  render();
+  initVisualBar();
+  renderList();
 </script>
 
 </body>
