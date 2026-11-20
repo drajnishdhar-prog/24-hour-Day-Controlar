@@ -403,28 +403,32 @@
 </div>
 
 <script>
+  // Categories ordered 1 to 8 (9. Unplanned is calculated automatically)
   const CATEGORIES = {
     "Sleep & Rest": "#818cf8",
-    "Work & Teaching": "#38bdf8",
     "Study & Planning": "#c084fc",
     "Workout & Exercise": "#22c55e",
+    "Bath, Self Care & Clothes Wash": "#06b6d4",
     "Food & Cooking": "#f59e0b",
+    "Work & Teaching": "#38bdf8",
     "Daily Tasks & Travel": "#fb7185",
     "Free & Extra Time": "#94a3b8"
   };
 
+  // Default 24-hour template in your exact 1–8 sequence (any leftover time automatically shows as 9. Unplanned)
   const DEFAULT_DATA = [
-    { id: 1, name: "Night Sleep", category: "Sleep & Rest", hours: 7, minutes: 30, completed: false },
-    { id: 2, name: "Workout & Exercise", category: "Workout & Exercise", hours: 1, minutes: 30, completed: false },
-    { id: 3, name: "Main Work / Teaching", category: "Work & Teaching", hours: 6, minutes: 0, completed: false },
-    { id: 4, name: "Self-Study & Lesson Planning", category: "Study & Planning", hours: 3, minutes: 0, completed: false },
+    { id: 1, name: "Night Sleep", category: "Sleep & Rest", hours: 7, minutes: 0, completed: false },
+    { id: 2, name: "Self-Study & Lesson Planning", category: "Study & Planning", hours: 3, minutes: 0, completed: false },
+    { id: 3, name: "Workout & Exercise", category: "Workout & Exercise", hours: 1, minutes: 0, completed: false },
+    { id: 4, name: "Bath, Self Care & Clothes Wash", category: "Bath, Self Care & Clothes Wash", hours: 1, minutes: 0, completed: false },
     { id: 5, name: "Cooking & Eating Meals", category: "Food & Cooking", hours: 2, minutes: 0, completed: false },
-    { id: 6, name: "Home Tasks & Travel", category: "Daily Tasks & Travel", hours: 2, minutes: 0, completed: false },
-    { id: 7, name: "Relax & Extra Time", category: "Free & Extra Time", hours: 2, minutes: 0, completed: false }
+    { id: 6, name: "Main Work / Teaching", category: "Work & Teaching", hours: 7, minutes: 0, completed: false },
+    { id: 7, name: "Daily Tasks & Travel", category: "Daily Tasks & Travel", hours: 2, minutes: 30, completed: false },
+    { id: 8, name: "Relax & Extra Time", category: "Free & Extra Time", hours: 0, minutes: 30, completed: false }
   ];
 
-  const STORAGE_KEY = "dayControllerSimpleData_v2";
-  let activities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT_DATA;
+  const STORAGE_KEY = "dayControllerSimpleData_v3";
+  let activities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || JSON.parse(JSON.stringify(DEFAULT_DATA));
 
   function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
@@ -460,6 +464,12 @@
       `;
       legend.appendChild(leg);
     });
+
+    const unpSeg = document.createElement("div");
+    unpSeg.className = "progress-segment";
+    unpSeg.id = "seg-unplanned";
+    unpSeg.style.backgroundColor = "#334155";
+    track.appendChild(unpSeg);
 
     const unpLeg = document.createElement("div");
     unpLeg.className = "legend-item";
@@ -587,19 +597,21 @@
     document.getElementById("completedPct").textContent = `${compPct}% of planned done`;
     document.getElementById("barRatioText").textContent = `${totalMins} / 1440 mins`;
 
+    const denom = Math.max(1440, totalMins);
     Object.keys(CATEGORIES).forEach((cat, idx) => {
       const mins = catTotals[cat] || 0;
-      const widthPct = mins > 0 ? Math.min((mins / Math.max(1440, totalMins)) * 100, 100) : 0;
+      const widthPct = mins > 0 ? Math.min((mins / denom) * 100, 100) : 0;
       const seg = document.getElementById(`seg-${idx}`);
       const legVal = document.getElementById(`leg-val-${idx}`);
       if (seg) seg.style.width = `${widthPct}%`;
       if (legVal) legVal.textContent = formatMins(mins);
     });
 
+    const unplannedMins = Math.max(0, remainingMins);
+    const unpSeg = document.getElementById("seg-unplanned");
     const unpVal = document.getElementById("leg-val-unplanned");
-    if (unpVal) {
-      unpVal.textContent = formatMins(Math.max(0, remainingMins));
-    }
+    if (unpSeg) unpSeg.style.width = `${(unplannedMins / denom) * 100}%`;
+    if (unpVal) unpVal.textContent = formatMins(unplannedMins);
   }
 
   function updateField(id, field, value) {
