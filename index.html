@@ -47,16 +47,64 @@
       gap: 10px;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     h1 {
       font-size: 1.4rem;
       font-weight: 700;
       color: var(--text);
     }
 
+    .sync-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+    }
+
+    .sync-badge.synced {
+      color: var(--success);
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .sync-badge.syncing {
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .sync-badge.offline {
+      color: var(--warning);
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.1);
+    }
+
     .btn-group {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .sync-mode-select {
+      width: auto;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     button {
@@ -206,6 +254,11 @@
       color: var(--muted);
     }
 
+    .activity-row.habit-synced {
+      box-shadow: inset 3px 0 0 var(--success);
+      padding-left: 8px;
+    }
+
     .row-header {
       font-size: 0.75rem;
       color: var(--muted);
@@ -348,8 +401,15 @@
 
 <div class="container">
   <header>
-    <h1>24-Hour Day Controller</h1>
+    <div class="header-left">
+      <h1>24-Hour Day Controller</h1>
+      <span id="syncStatus" class="sync-badge syncing">🔄 Connecting Habit Sync...</span>
+    </div>
     <div class="btn-group">
+      <select id="syncModeSelect" class="sync-mode-select" onchange="changeSyncMode(this.value)" title="Choose when synced rows auto-tick">
+        <option value="any">Auto-Tick: Any Log</option>
+        <option value="target">Auto-Tick: Target Met</option>
+      </select>
       <button class="btn-primary" onclick="addActivity()">+ Add Block</button>
       <button onclick="uncheckAll()">New Day (Uncheck)</button>
       <button class="btn-danger" onclick="resetDefaults()">Reset Default</button>
@@ -402,7 +462,25 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+  // Same Firebase config as Habit Tracker (Read-Only sync)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIyneiaKas_LgQJ-q5Oc7JHNz6Vf1E9uc",
+    authDomain: "habit-tracker-acdee.firebaseapp.com",
+    projectId: "habit-tracker-acdee",
+    storageBucket: "habit-tracker-acdee.firebasestorage.app",
+    messagingSenderId: "631008050481",
+    appId: "1:631008050481:web:80c8daa5c5726a3af44410",
+    measurementId: "G-8B1JYBEWDC"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const habitsDocRef = doc(db, "habitTracker", "habits");
+
   // Categories ordered 1 to 8 (9. Unplanned is calculated automatically)
   const CATEGORIES = {
     "Sleep & Rest": "#818cf8",
@@ -428,7 +506,20 @@
   ];
 
   const STORAGE_KEY = "dayControllerSimpleData_v3";
+  const SYNC_MODE_KEY = "dayControllerSyncMode_v1";
+
   let activities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || JSON.parse(JSON.stringify(DEFAULT_DATA));
+  let syncMode = localStorage.getItem(SYNC_MODE_KEY) || "any";
+  let latestHabitItems = null;
+
+  document.getElementById("syncModeSelect").value = syncMode;
+
+  function setSyncStatus(state, text) {
+    const el = document.getElementById("syncStatus");
+    if (!el) return;
+    el.className = `sync-badge ${state}`;
+    el.textContent = text;
+  }
 
   function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(activities));
@@ -440,6 +531,125 @@
     const h = Math.floor(abs / 60);
     const m = abs % 60;
     return `${sign}${h}h ${m}m`;
+  }
+
+  // Maps Habit Tracker items to Day Controller blocks
+  function getTargetBlockIdForHabit(habit) {
+    const ID_MAP = {
+      1: 1, // Sleep -> Night Sleep
+      2: 2, // Daily Newspaper Reading -> Self-Study & Lesson Planning
+      3: 2, // Self-Study / Problem Solving -> Self-Study & Lesson Planning
+      4: 3, // Resistance Training & Fitness -> Workout & Exercise
+      5: 4, // Self Care (Bath & Clothes Wash) -> Bath, Self Care & Clothes Wash
+      6: 5, // Cooking, Meal Prep & Eating -> Cooking & Eating Meals
+      7: 6, // Tuition & Coaching Classes -> Main Work / Teaching
+      8: 7, // Travelling & Commute -> Daily Tasks & Travel
+      9: 3  // Walking / Active Steps -> Workout & Exercise
+    };
+    if (ID_MAP[habit.id]) return ID_MAP[habit.id];
+
+    const n = (habit.name || "").toLowerCase();
+    if (n.includes("sleep") || n.includes("nap") || n.includes("rest")) return 1;
+    if (n.includes("study") || n.includes("newspaper") || n.includes("read") || n.includes("revision") || n.includes("plan")) return 2;
+    if (n.includes("workout") || n.includes("fitness") || n.includes("train") || n.includes("gym") || n.includes("walk") || n.includes("step") || n.includes("exercise")) return 3;
+    if (n.includes("bath") || n.includes("self care") || n.includes("clothes") || n.includes("wash")) return 4;
+    if (n.includes("cook") || n.includes("meal") || n.includes("eat") || n.includes("food")) return 5;
+    if (n.includes("tuition") || n.includes("coach") || n.includes("teach") || n.includes("work") || n.includes("class")) return 6;
+    if (n.includes("travel") || n.includes("commute") || n.includes("task")) return 7;
+    return 8; // Relax & Extra Time
+  }
+
+  function applyHabitSync(habitItems, forceRefresh = false) {
+    if (!Array.isArray(habitItems)) return;
+
+    // Aggregate logged minutes and target status per Day Controller block
+    const blockStats = {};
+    habitItems.forEach((h) => {
+      const blockId = getTargetBlockIdForHabit(h);
+      if (!blockStats[blockId]) {
+        blockStats[blockId] = {
+          logged: 0,
+          target: 0,
+          anyTargetHit: false
+        };
+      }
+      const logged = Math.max(0, parseInt(h.logged) || 0);
+      const target = Math.max(0, parseInt(h.target) || 0);
+      blockStats[blockId].logged += logged;
+      blockStats[blockId].target += target;
+      if (logged > 0 && (target === 0 || logged >= target)) {
+        blockStats[blockId].anyTargetHit = true;
+      }
+    });
+
+    let hasChanges = false;
+
+    activities.forEach((act) => {
+      const stats = blockStats[act.id];
+      if (!stats) return;
+
+      const loggedMins = stats.logged;
+      const prevSyncedMins = act.lastSyncedMins || 0;
+
+      if (loggedMins > 0) {
+        const shouldComplete = syncMode === "target"
+          ? (stats.anyTargetHit || (stats.target > 0 && loggedMins >= stats.target))
+          : true;
+
+        // Only overwrite when Habit Tracker value actually changed or sync mode changed
+        if (forceRefresh || loggedMins !== prevSyncedMins || !act.syncedFromHabit) {
+          if (!act.syncedFromHabit) {
+            act.plannedHours = parseInt(act.hours) || 0;
+            act.plannedMinutes = parseInt(act.minutes) || 0;
+          }
+          act.hours = Math.floor(loggedMins / 60);
+          act.minutes = loggedMins % 60;
+          act.completed = shouldComplete;
+          act.syncedFromHabit = true;
+          act.lastSyncedMins = loggedMins;
+          hasChanges = true;
+        }
+      } else if (loggedMins === 0 && act.syncedFromHabit) {
+        // Habit Tracker was reset to 0m (e.g. New Day Reset): uncheck & restore planned time
+        if (act.plannedHours !== undefined) act.hours = act.plannedHours;
+        if (act.plannedMinutes !== undefined) act.minutes = act.plannedMinutes;
+        act.completed = false;
+        act.syncedFromHabit = false;
+        act.lastSyncedMins = 0;
+        hasChanges = true;
+      }
+    });
+
+    if (hasChanges) {
+      save();
+      renderList();
+    }
+  }
+
+  function startHabitSync() {
+    onSnapshot(habitsDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (Array.isArray(data.items)) {
+          latestHabitItems = data.items;
+          applyHabitSync(latestHabitItems, false);
+        }
+        setSyncStatus("synced", "☁️ Habit Tracker Synced");
+      } else {
+        setSyncStatus("offline", "⚠️ No Habit Data Yet");
+      }
+    }, (error) => {
+      console.error("Habit sync error:", error);
+      setSyncStatus("offline", "⚠️ Offline (Local Only)");
+    });
+  }
+
+  function changeSyncMode(mode) {
+    syncMode = mode;
+    localStorage.setItem(SYNC_MODE_KEY, syncMode);
+    if (latestHabitItems) {
+      applyHabitSync(latestHabitItems, true);
+    }
   }
 
   function initVisualBar() {
@@ -493,7 +703,10 @@
 
       const row = document.createElement("div");
       row.id = `row-${act.id}`;
-      row.className = `activity-row ${act.completed ? "completed" : ""}`;
+      row.className = `activity-row ${act.completed ? "completed" : ""} ${act.syncedFromHabit ? "habit-synced" : ""}`;
+      if (act.syncedFromHabit) {
+        row.title = "Auto-synced from Habit Tracker";
+      }
 
       const catOptions = Object.keys(CATEGORIES).map(cat =>
         `<option value="${cat}" ${act.category === cat ? "selected" : ""}>${cat}</option>`
@@ -660,7 +873,15 @@
   }
 
   function uncheckAll() {
-    activities.forEach(a => a.completed = false);
+    activities.forEach(a => {
+      a.completed = false;
+      if (a.syncedFromHabit) {
+        if (a.plannedHours !== undefined) a.hours = a.plannedHours;
+        if (a.plannedMinutes !== undefined) a.minutes = a.plannedMinutes;
+        a.syncedFromHabit = false;
+        a.lastSyncedMins = 0;
+      }
+    });
     save();
     renderList();
   }
@@ -670,11 +891,24 @@
       activities = JSON.parse(JSON.stringify(DEFAULT_DATA));
       save();
       renderList();
+      if (latestHabitItems) {
+        applyHabitSync(latestHabitItems, true);
+      }
     }
   }
 
+  // Expose functions globally for inline HTML handlers
+  window.addActivity = addActivity;
+  window.uncheckAll = uncheckAll;
+  window.resetDefaults = resetDefaults;
+  window.toggleComplete = toggleComplete;
+  window.updateField = updateField;
+  window.deleteActivity = deleteActivity;
+  window.changeSyncMode = changeSyncMode;
+
   initVisualBar();
   renderList();
+  startHabitSync();
 </script>
 
 </body>
